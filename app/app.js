@@ -82,11 +82,20 @@ async function ackIncident(id) {
 
 let currentIncidents = [];
 let firstLoad = true;
+let refreshInFlight = false;
+
+function mergeIncidents(current, incoming) {
+  const byId = new Map(current.map((incident) => [incident.id, incident]));
+  for (const incident of incoming) byId.set(incident.id, incident);
+  return [...byId.values()];
+}
 
 async function refresh() {
+  if (refreshInFlight) return;
+  refreshInFlight = true;
   try {
     const page = await fetchIncidents();
-    currentIncidents = page.incidents;
+    currentIncidents = mergeIncidents(currentIncidents, page.incidents);
     render(currentIncidents);
     error.hidden = true;
   } catch (cause) {
@@ -97,6 +106,7 @@ async function refresh() {
       firstLoad = false;
       loader.hidden = true;
     }
+    refreshInFlight = false;
   }
 }
 
