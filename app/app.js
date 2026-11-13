@@ -1,4 +1,4 @@
-import { ack, fetchIncidents } from './api.js?v=95cedaa';
+import { ack, fetchIncidents } from './api.js?v=a2cc839';
 
 const loader = document.querySelector('[data-testid="loader"]');
 const empty = document.querySelector('[data-testid="empty"]');
