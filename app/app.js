@@ -4,8 +4,13 @@ const loader = document.querySelector('[data-testid="loader"]');
 const empty = document.querySelector('[data-testid="empty"]');
 const list = document.querySelector('[data-testid="incident-list"]');
 const error = document.querySelector('[data-testid="error"]');
+const confirmBox = document.querySelector('[data-testid="confirm"]');
+const confirmText = confirmBox.querySelector('.confirm-text');
+const confirmAck = document.querySelector('[data-testid="confirm-ack"]');
+const confirmCancel = document.querySelector('[data-testid="confirm-cancel"]');
 const ackedIds = new Set();
 const pendingIds = new Set();
+let confirmingId = null;
 
 const timeFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: 'short',
@@ -48,7 +53,8 @@ function incidentRow(incident) {
     button.dataset.testid = 'ack';
     button.textContent = pendingIds.has(incident.id) ? 'Acking…' : 'Ack';
     button.disabled = pendingIds.has(incident.id);
-    button.addEventListener('click', () => ackIncident(incident.id));
+    button.dataset.id = incident.id;
+    button.addEventListener('click', () => askToConfirm(incident.id));
     action.append(button);
   }
 
@@ -63,6 +69,32 @@ function render(incidents) {
   list.replaceChildren(...newestFirst.map(incidentRow));
   empty.hidden = newestFirst.length > 0;
 }
+
+// Product decision (SCHED-4515): Ack asks to confirm, and the confirm names the incident id.
+// The id is pinned when the confirm opens, so later refreshes that move rows cannot change it.
+function askToConfirm(id) {
+  confirmingId = id;
+  confirmBox.dataset.id = id;
+  confirmText.textContent = `Ack ${id}?`;
+  confirmBox.hidden = false;
+  confirmAck.focus();
+}
+
+function closeConfirm() {
+  confirmingId = null;
+  delete confirmBox.dataset.id;
+  confirmBox.hidden = true;
+}
+
+confirmAck.addEventListener('click', () => {
+  const id = confirmingId;
+  closeConfirm();
+  if (id) ackIncident(id);
+});
+confirmCancel.addEventListener('click', closeConfirm);
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !confirmBox.hidden) closeConfirm();
+});
 
 async function ackIncident(id) {
   pendingIds.add(id);

@@ -22,6 +22,12 @@ main { min-height: 220px; }
 .acked { color: #137333; font-weight: 650; }
 footer { color: #687386; font-size: 13px; }
 footer code { color: #465366; }
+.confirm { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; gap: 12px; align-items: center; padding: 14px 18px; border-radius: 8px; color: #fff; background: #182230; box-shadow: 0 6px 24px rgb(0 0 0 / 25%); z-index: 10; }
+.confirm[hidden] { display: none; }
+.confirm p { margin: 0; font-weight: 650; font-family: ui-monospace, monospace; }
+.confirm button { padding: 6px 14px; border-radius: 5px; border: 1px solid #fff; cursor: pointer; }
+.confirm-ack { color: #fff; background: #1a66cc; border-color: #1a66cc; }
+.confirm-cancel { color: #182230; background: #fff; }
 
 @media (max-width: 760px) {
   header, main, footer { padding-inline: 14px; }
