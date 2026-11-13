@@ -17,7 +17,11 @@ const timeFormatter = new Intl.DateTimeFormat(undefined, {
   timeStyle: 'medium',
 });
 
-function incidentRow(incident) {
+// Rows are keyed by incident id and kept in the DOM: a refresh only inserts new rows and updates the
+// action cell in place. It never removes or rebuilds an existing row (R1 without losing what on-call sees).
+const rowsById = new Map();
+
+function createRow(incident) {
   const row = document.createElement('li');
   row.dataset.testid = 'incident-row';
   row.dataset.id = incident.id;
@@ -41,32 +45,50 @@ function incidentRow(incident) {
 
   const action = document.createElement('span');
   action.className = 'action';
-  if (ackedIds.has(incident.id)) {
+
+  row.append(id, severity, summary, time, action);
+  return row;
+}
+
+function updateAction(row, incidentId) {
+  const action = row.querySelector('.action');
+  const state = ackedIds.has(incidentId) ? 'acked' : pendingIds.has(incidentId) ? 'pending' : 'ready';
+  if (action.dataset.state === state) return;
+  action.dataset.state = state;
+  if (state === 'acked') {
     const mark = document.createElement('span');
     mark.dataset.testid = 'acked';
     mark.className = 'acked';
     mark.textContent = 'Acked';
-    action.append(mark);
-  } else {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.dataset.testid = 'ack';
-    button.textContent = pendingIds.has(incident.id) ? 'Acking…' : 'Ack';
-    button.disabled = pendingIds.has(incident.id);
-    button.dataset.id = incident.id;
-    button.addEventListener('click', () => askToConfirm(incident.id));
-    action.append(button);
+    action.replaceChildren(mark);
+    return;
   }
-
-  row.append(id, severity, summary, time, action);
-  return row;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.dataset.testid = 'ack';
+  button.dataset.id = incidentId;
+  button.textContent = state === 'pending' ? 'Acking…' : 'Ack';
+  button.disabled = state === 'pending';
+  button.addEventListener('click', () => askToConfirm(incidentId));
+  action.replaceChildren(button);
 }
 
 function render(incidents) {
   const newestFirst = [...incidents].sort(
     (a, b) => new Date(b.openedAt).getTime() - new Date(a.openedAt).getTime(),
   );
-  list.replaceChildren(...newestFirst.map(incidentRow));
+  let cursor = list.firstElementChild;
+  for (const incident of newestFirst) {
+    let row = rowsById.get(incident.id);
+    if (!row) {
+      row = createRow(incident);
+      rowsById.set(incident.id, row);
+      list.insertBefore(row, cursor);
+    } else if (row === cursor) {
+      cursor = cursor.nextElementSibling;
+    }
+    updateAction(row, incident.id);
+  }
   empty.hidden = newestFirst.length > 0;
 }
 

@@ -13,7 +13,7 @@ what just broke and takes it.
 
 ## Requirements
 
-- **R1** New incidents appear live at the top of the list, newest first.
+- **R1** New incidents appear live at the top of the list, newest first. Existing rows stay in place: a refresh inserts new rows and never removes or rebuilds the ones on screen.
 - **R2** Each incident row has an **Ack** button. Ack opens a confirm that names the incident id; only confirming sends the ack (`api.ack(id)`) for that id and marks the row acked. Cancel sends nothing. (Changed by product after the 00:07 ack race, SCHED-4515.)
 - **R3** Show a loader until incidents load.
 - **R4** The board refreshes itself every 2 seconds while open.
